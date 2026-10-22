@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data:; img-src 'self' data:">
+<title>WrapMates Reports</title>
+<link rel="icon" href="mark.png">
+<style>
+:root{--navy:#0E1634;--orange:#F68720;--side:#0A1029;--txt:#E9ECF5;--muted:#9AA2C0;--rule:#26305A}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--navy);color:var(--txt);font:14px "Segoe UI",system-ui,-apple-system,sans-serif}
+.app{display:grid;grid-template-columns:232px 1fr;height:100vh;transition:grid-template-columns .18s ease}
+.app.mini{grid-template-columns:58px 1fr}
+.app.mini aside{padding:12px 8px;align-items:center}
+.app.mini .brand div,.app.mini .grp,.app.mini .note,.app.mini .who,.app.mini .ver,.app.mini button.nav .lbl{display:none}
+.app.mini .brand{padding:0 0 10px}
+.app.mini button.nav{justify-content:center;padding:10px 0;width:42px}
+.app.mini button.nav .dot{width:12px;height:12px}
+.app.mini .mini-who{display:flex}
+.mini-who{display:none;margin-top:auto;flex-direction:column;align-items:center;gap:8px;padding-top:10px;border-top:1px solid var(--rule);width:100%}
+.mini-who .dot{width:12px;height:12px}
+.sbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:7px;color:var(--txt);font-size:16px;line-height:1}
+.sbtn:hover{background:#1B2550}.sbtn:focus-visible{outline:2px solid var(--orange)}
+.brand .sbtn{margin-left:auto}
+.app.mini .brand{flex-direction:column}
+@media (prefers-reduced-motion:reduce){.app{transition:none}}
+aside{background:var(--side);border-right:1px solid var(--rule);display:flex;flex-direction:column;padding:18px 12px;gap:4px;overflow:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px}
+.brand .mk{width:34px;height:34px;border-radius:8px;display:block;background:#fff}
+
+.brand b{font-size:16px;font-weight:600}
+.brand small{display:block;color:var(--muted);font-size:11.5px;font-weight:400}
+.grp{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:14px 10px 6px}
+button.nav{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:7px;cursor:pointer;color:var(--txt);font-size:14px}
+button.nav:hover{background:#151D40}
+button.nav[aria-current="true"]{background:#1B2550;box-shadow:inset 3px 0 0 var(--orange)}
+button.nav:focus-visible{outline:2px solid var(--orange);outline-offset:1px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.d-mark{background:#16A765}.d-christian{background:#FBD3E0}.d-alessandro{background:#4986E7}.d-online{background:var(--orange)}
+.note{margin-top:auto;color:var(--muted);font-size:11.5px;line-height:1.5;padding:12px 10px 0;border-top:1px solid var(--rule)}
+main{position:relative;background:#F5F6FA}
+iframe,webview{position:absolute;inset:0;width:100%;height:100%;border:0;background:#F5F6FA}
+[hidden]{display:none!important}
+.ver{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 10px 0;color:var(--muted);font-size:11.5px}
+.ver button{all:unset;cursor:pointer;color:var(--txt);font-size:11.5px;padding:4px 8px;border:1px solid var(--rule);border-radius:6px}
+.ver button:hover{background:#151D40}.ver button:focus-visible{outline:2px solid var(--orange)}
+.upd{position:fixed;inset:0;z-index:100;background:rgba(5,8,22,.86);display:flex;align-items:center;justify-content:center;padding:24px}
+.upd .box{background:#121A38;border:1px solid var(--rule);border-radius:12px;max-width:440px;width:100%;padding:26px 26px 22px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.upd h2{margin:0 0 8px;font-size:19px;font-weight:600}
+.upd p{margin:0 0 16px;color:#C8CDE2;line-height:1.5}
+.upd .prog{height:8px;background:#0A1029;border-radius:999px;overflow:hidden;margin:0 0 8px}
+.upd .prog i{display:block;height:100%;width:0;background:var(--orange);transition:width .3s}
+.upd .pct{font-size:12px;color:var(--muted);margin:0 0 16px}
+.upd button{all:unset;cursor:pointer;background:var(--orange);color:var(--navy);font-weight:600;padding:10px 18px;border-radius:8px}
+.upd button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.upd .err{font-size:11.5px;color:var(--muted);margin:-8px 0 16px;word-break:break-word}
+.bar{position:absolute;top:0;left:0;right:0;height:40px;background:var(--side);display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid var(--rule);z-index:2}
+.bar button{all:unset;cursor:pointer;color:var(--txt);padding:5px 10px;border-radius:6px;font-size:13px}
+.bar button:hover{background:#1B2550}
+.bar button:focus-visible{outline:2px solid var(--orange)}
+.bar span{color:var(--muted);font-size:12px;margin-left:auto;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:50%}
+#online-wrap webview{top:40px;height:calc(100% - 40px)}
+
+.who{display:flex;align-items:center;gap:8px;padding:10px 10px 0;font-size:12.5px;color:var(--txt)}
+.who .dot{width:9px;height:9px}
+.who button{all:unset;cursor:pointer;margin-left:auto;color:var(--muted);font-size:11.5px;padding:4px 8px;border:1px solid var(--rule);border-radius:6px}
+.who button:hover{background:#151D40;color:var(--txt)}.who button:focus-visible{outline:2px solid var(--orange)}
+.gate{position:fixed;inset:0;z-index:90;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate .box{background:#121A38;border:1px solid var(--rule);border-radius:14px;max-width:420px;width:100%;padding:28px}
+.gate .logo{width:44px;height:44px;border-radius:10px;background:#fff;display:block;margin-bottom:14px}
+.gate h1{margin:0 0 6px;font-size:21px;font-weight:600}
+.gate p{margin:0 0 18px;color:#C8CDE2;line-height:1.5}
+.people{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.people button{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--rule);border-radius:10px;cursor:pointer;font-size:15px}
+.people button:hover{background:#1B2550}.people button:focus-visible{outline:2px solid var(--orange)}
+.people small{margin-left:auto;color:var(--muted);font-size:11.5px}
+.gate label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
+.gate input{font:inherit;font-size:20px;letter-spacing:.35em;width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--rule);background:#0A1029;color:#fff;margin-bottom:12px}
+.gate input:focus-visible{outline:2px solid var(--orange);outline-offset:1px}
+.gate .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gate .go{all:unset;cursor:pointer;background:var(--orange);color:var(--navy);font-weight:600;padding:10px 18px;border-radius:8px}
+.gate .go:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.gate .link{all:unset;cursor:pointer;color:var(--muted);font-size:12.5px;text-decoration:underline}
+.gate .msg{min-height:18px;font-size:12.5px;color:#FFB4B4;margin:0 0 10px}
+.ghint{position:absolute;inset:40px 0 0 0;z-index:3;background:var(--navy);display:flex;align-items:center;justify-content:center;padding:24px}
+.ghint .box{background:#121A38;border:1px solid var(--rule);border-radius:12px;max-width:460px;padding:24px}
+.ghint h2{margin:0 0 8px;font-size:18px}.ghint p{color:#C8CDE2;line-height:1.5;margin:0 0 14px}
+.ghint button{all:unset;cursor:pointer;background:var(--orange);color:var(--navy);font-weight:600;padding:9px 16px;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="app" inert>
+  <aside>
+    <div class="brand"><img class="mk" src="mark.png" alt=""><div><b>WrapMates</b><small>Reports</small></div><button type="button" class="sbtn" id="side-tgl" aria-label="Collapse the side panel" title="Collapse">&#171;</button></div>
+    <div class="grp">Live · refreshed every hour</div>
+    <div id="navlist"></div>
+    <div class="note">Your report reloads by itself every hour. Sign in to Claude once with your own email inside the app; it remembers you. Email and WhatsApp links open in your normal browser.</div>
+    <div class="who"><span class="dot" id="who-dot"></span><span id="who-name"></span><button type="button" id="lock">Lock</button><button type="button" id="switch">Switch user</button></div>
+    <div class="ver"><span id="ver">Version …</span><button type="button" id="chk">Check for updates</button></div>
+    <div class="mini-who"><span class="dot" id="mini-dot"></span><button type="button" class="sbtn" id="mini-lock" title="Lock" aria-label="Lock">&#128274;&#xFE0E;</button></div>
+  </aside>
+  <main>
+    <div id="online-wrap">
+      <div class="bar">
+        <button id="b-back" title="Back">&#8592; Back</button>
+        <button id="b-reload" title="Reload now">Reload now</button>
+        <span id="b-url"></span>
+      </div>
+      <div class="ghint" id="ghint" hidden>
+        <div class="box">
+          <h2>Use email to sign in</h2>
+          <p>Google does not allow its sign-in inside desktop apps. On the Claude sign-in page, type your email address and choose <b>Continue with email</b>, then enter the code Claude sends you.</p>
+          <button type="button" id="ghint-ok">Back to sign-in</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="gate" id="gate">
+  <div class="box">
+    <img class="logo" src="mark.png" alt="">
+    <div id="g-pick">
+      <h1>Who is using WrapMates Reports?</h1>
+      <p>Choose your name. You will set your own PIN the first time.</p>
+      <div class="people" id="people"></div>
+    </div>
+    <form id="g-pin" hidden autocomplete="off">
+      <h1 id="g-title"></h1>
+      <p id="g-sub"></p>
+      <label for="pin1" id="l-pin1">PIN</label>
+      <input id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="8" required>
+      <div id="confirm-wrap" hidden><label for="pin2">Type the PIN again</label><input id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="8"></div>
+      <div class="msg" id="g-msg" role="alert"></div>
+      <div class="row"><button class="go" type="submit" id="g-go">Continue</button><button class="link" type="button" id="g-back">Not you?</button><button class="link" type="button" id="g-forgot">Forgot PIN?</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="upd" id="upd" hidden role="alertdialog" aria-modal="true" aria-labelledby="upd-t" aria-describedby="upd-d">
+  <div class="box">
+    <h2 id="upd-t">Update required</h2>
+    <p id="upd-d">A new version of WrapMates Reports is available. It must be installed before you can continue.</p>
+    <div class="prog" id="upd-prog"><i id="upd-bar"></i></div>
+    <div class="pct" id="upd-pct"></div>
+    <div class="err" id="upd-err" hidden></div>
+    <button type="button" id="upd-btn" hidden>Install and restart</button>
+  </div>
+</div>
+<script>
+var PEOPLE={
+  mark:{name:'Mark',dot:'d-mark',views:['live-mark']},
+  christian:{name:'Christian',dot:'d-christian',views:['live-mark','live-christian','live-alessandro','online']},
+  alessandro:{name:'Alessandro',dot:'d-alessandro',views:['live-alessandro']}
+};
+var LABEL={'live-mark':['Mark','d-mark'],'live-christian':['Christian','d-christian'],'live-alessandro':['Alessandro','d-alessandro'],'online':['All reports','d-online']};
+var URLS={'live-mark':'https://claude.ai/artifact/RGxBZmiPZEz6eTkfYpQGBu','live-christian':'https://claude.ai/artifact/Vc4yAizv2Nytwv6GaqNsD6','live-alessandro':'https://claude.ai/artifact/Lo97ucJmpYc6D4Wab8qte5','online':'https://claude.ai/code/artifacts'};
+var HOUR=60*60*1000,views={},current=null,user=null;
+var wrap=document.getElementById('online-wrap'),urlEl=document.getElementById('b-url'),appEl=document.querySelector('.app'),ghint=document.getElementById('ghint');
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}}
+function hhmm(d){return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+async function hash(pin,who){var salt=store('wm-salt-'+who);if(!salt){var a=new Uint8Array(16);crypto.getRandomValues(a);salt=Array.from(a,function(b){return b.toString(16).padStart(2,'0');}).join('');store('wm-salt-'+who,salt);}
+  var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+who+':'+pin));return Array.from(new Uint8Array(buf),function(b){return b.toString(16).padStart(2,'0');}).join('');}
+
+/* ---------- views (each person has their own Claude sign-in) ---------- */
+function clearViews(){Object.keys(views).forEach(function(v){views[v].el.remove();});views={};current=null;}
+function stamp(v){views[v].at=new Date();if(current===v)urlEl.textContent='Updated '+hhmm(views[v].at)+' · refreshes every hour';}
+function ensureWv(v){if(views[v])return views[v].el;var wv=document.createElement('webview');wv.setAttribute('partition','persist:claude-'+user);wv.setAttribute('allowpopups','');wv.src=URLS[v];wv.hidden=true;wrap.appendChild(wv);
+  views[v]={el:wv,at:null};
+  wv.addEventListener('did-finish-load',function(){stamp(v);});
+  wv.addEventListener('did-navigate',function(e){if(/^https:\/\/accounts\.google\.com\//.test(e.url)&&current===v){ghint.hidden=false;}});
+  return wv;}
+document.getElementById('ghint-ok').onclick=function(){ghint.hidden=true;var w=views[current];if(w){if(w.el.canGoBack())w.el.goBack();else w.el.loadURL(URLS[current]);}};
+function refreshAll(){Object.keys(views).forEach(function(v){try{views[v].el.loadURL(URLS[v]);}catch(e){}});}
+setInterval(refreshAll,HOUR);window.addEventListener('online',refreshAll);
+document.getElementById('b-back').onclick=function(){var w=current&&views[current];if(w&&w.el.canGoBack())w.el.goBack();};
+document.getElementById('b-reload').onclick=function(){var w=current&&views[current];if(w)w.el.loadURL(URLS[current]);};
+function show(v){if(!user||PEOPLE[user].views.indexOf(v)<0)return;ghint.hidden=true;
+  document.querySelectorAll('button.nav').forEach(function(n){n.setAttribute('aria-current',String(n.dataset.view===v));});
+  ensureWv(v);Object.keys(views).forEach(function(k){views[k].el.hidden=k!==v;});current=v;
+  var at=views[v].at;urlEl.textContent=at?('Updated '+hhmm(at)+' · refreshes every hour'):'Loading…';store('wm-view-'+user,v);}
+function buildNav(){var nl=document.getElementById('navlist');nl.textContent='';
+  PEOPLE[user].views.forEach(function(v){var b=document.createElement('button');b.className='nav';b.type='button';b.dataset.view=v;
+    var d=document.createElement('span');d.className='dot '+LABEL[v][1];b.appendChild(d);var lb=document.createElement('span');lb.className='lbl';lb.textContent=LABEL[v][0];b.appendChild(lb);b.title=LABEL[v][0];b.setAttribute('aria-label',LABEL[v][0]);b.onclick=function(){show(v);};nl.appendChild(b);});
+  document.getElementById('who-dot').className='dot '+PEOPLE[user].dot;document.getElementById('mini-dot').className='dot '+PEOPLE[user].dot;document.getElementById('mini-dot').title=PEOPLE[user].name;document.getElementById('who-name').textContent=PEOPLE[user].name;
+  document.getElementById('switch').hidden=user!=='christian';}
+
+/* ---------- sign-in gate ---------- */
+var gate=document.getElementById('gate'),gPick=document.getElementById('g-pick'),gPin=document.getElementById('g-pin'),pin1=document.getElementById('pin1'),pin2=document.getElementById('pin2'),msg=document.getElementById('g-msg'),chosen=null,fails=0,lockUntil=0;
+function openGate(forWho){appEl.inert=true;gate.hidden=false;msg.textContent='';pin1.value='';pin2.value='';
+  if(forWho){chosen=forWho;gPick.hidden=true;gPin.hidden=false;var has=!!store('wm-pin-'+forWho);
+    document.getElementById('g-title').textContent=(has?'Welcome back, ':'Hello, ')+PEOPLE[forWho].name;
+    document.getElementById('g-sub').textContent=has?'Enter your PIN to open your reports.':'Choose a PIN (4 to 8 digits). You will use it every time you open the app.';
+    document.getElementById('l-pin1').textContent=has?'PIN':'New PIN';document.getElementById('confirm-wrap').hidden=has;pin2.required=!has;
+    document.getElementById('g-forgot').hidden=!has;
+    setTimeout(function(){pin1.focus();},0);}
+  else{chosen=null;gPin.hidden=true;gPick.hidden=false;var pp=document.getElementById('people');pp.textContent='';
+    Object.keys(PEOPLE).forEach(function(k){var b=document.createElement('button');b.type='button';var d=document.createElement('span');d.className='dot '+PEOPLE[k].dot;b.appendChild(d);
+      b.appendChild(document.createTextNode(PEOPLE[k].name));var sm=document.createElement('small');sm.textContent=k==='christian'?'all reports':'own report';b.appendChild(sm);b.onclick=function(){openGate(k);};pp.appendChild(b);});
+    setTimeout(function(){var f=document.querySelector('#people button');if(f)f.focus();},0);}}
+document.getElementById('g-back').onclick=function(){openGate(null);};
+document.getElementById('g-forgot').onclick=async function(){if(!confirm('Reset the PIN for '+PEOPLE[chosen].name+'? For safety this also signs this person out of Claude in the app, so they will need to sign in again with their email.'))return;
+  store('wm-pin-'+chosen,null);store('wm-salt-'+chosen,null);if(user===chosen){clearViews();user=null;}
+  try{if(window.wmUpdate&&window.wmUpdate.resetProfile)await window.wmUpdate.resetProfile(chosen);}catch(e){}openGate(chosen);};
+gPin.addEventListener('submit',async function(e){e.preventDefault();msg.textContent='';
+  if(Date.now()<lockUntil){msg.textContent='Too many attempts. Try again in a minute.';return;}
+  var p=pin1.value.trim();if(!/^\d{4,8}$/.test(p)){msg.textContent='The PIN must be 4 to 8 digits.';return;}
+  var key='wm-pin-'+chosen,saved=store(key);
+  if(!saved){if(p!==pin2.value.trim()){msg.textContent='The two PINs do not match.';return;}store(key,await hash(p,chosen));}
+  else if(await hash(p,chosen)!==saved){fails++;if(fails>=5){lockUntil=Date.now()+60000;fails=0;}msg.textContent='That PIN is not right.';pin1.value='';pin1.focus();return;}
+  fails=0;signIn(chosen);});
+function signIn(who){if(user!==who){clearViews();}user=who;store('wm-user',who);buildNav();gate.hidden=true;appEl.inert=false;
+  var v=store('wm-view-'+who);if(PEOPLE[who].views.indexOf(v)<0)v=PEOPLE[who].views[0];show(v);}
+document.getElementById('lock').onclick=function(){openGate(user);};
+document.getElementById('mini-lock').onclick=function(){openGate(user);};
+(function(){var t=document.getElementById('side-tgl');
+  function set(mini){appEl.classList.toggle('mini',mini);t.innerHTML=mini?'&#187;':'&#171;';t.title=mini?'Expand':'Collapse';t.setAttribute('aria-label',mini?'Expand the side panel':'Collapse the side panel');store('wm-side-mini',mini?'1':'0');}
+  var saved=store('wm-side-mini');set(saved===null?true:saved==='1');
+  t.onclick=function(){set(!appEl.classList.contains('mini'));};})();
+document.getElementById('switch').onclick=function(){openGate(null);};
+(function(){var u=store('wm-user');openGate(PEOPLE[u]?u:null);})();
+
+(function(){
+  var U=window.wmUpdate;var ver=document.getElementById('ver'),chk=document.getElementById('chk');
+  if(!U){chk.hidden=true;ver.textContent='';return;}
+  U.version().then(function(v){ver.textContent='Version '+v;});
+  var o=document.getElementById('upd'),t=document.getElementById('upd-t'),d=document.getElementById('upd-d'),bar=document.getElementById('upd-bar'),pr=document.getElementById('upd-prog'),pct=document.getElementById('upd-pct'),er=document.getElementById('upd-err'),btn=document.getElementById('upd-btn'),mode='';
+  function lock(on){o.hidden=!on;document.querySelector('.app').inert=on||!document.getElementById('gate').hidden;if(on)setTimeout(function(){(btn.hidden?o.querySelector('.box'):btn).focus();},0);}
+  o.querySelector('.box').tabIndex=-1;
+  document.addEventListener('keydown',function(e){if(!o.hidden&&e.key==='Escape')e.preventDefault();},true);
+  btn.addEventListener('click',function(){if(mode==='ready'){btn.disabled=true;btn.textContent='Restarting…';U.install();}else{U.check();}});
+  chk.addEventListener('click',function(){chk.textContent='Checking…';U.check().finally(function(){setTimeout(function(){if(chk.textContent==='Checking…')chk.textContent='Check for updates';},1500);});});
+  U.onState(function(s){mode=s.phase;
+    if(s.phase==='downloading'){t.textContent='Update required';d.textContent='Version '+s.version+' of WrapMates Reports is available. It is downloading now and must be installed before you can continue.';pr.hidden=false;bar.style.width=(s.percent||0)+'%';pct.textContent='Downloading… '+(s.percent||0)+'%';er.hidden=true;btn.hidden=true;lock(true);}
+    else if(s.phase==='ready'){t.textContent='Update ready';d.textContent='Version '+s.version+' has downloaded. Install it to continue; the app will close and reopen by itself.';pr.hidden=false;bar.style.width='100%';pct.textContent='Downloaded';er.hidden=true;btn.textContent='Install and restart';btn.disabled=false;btn.hidden=false;lock(true);}
+    else if(s.phase==='failed'){t.textContent='Update required';d.textContent='The update could not be downloaded. Check your internet connection and try again; the app cannot be used until it is updated.';pr.hidden=true;pct.textContent='';er.textContent=s.message||'';er.hidden=!s.message;btn.textContent='Try again';btn.disabled=false;btn.hidden=false;lock(true);}
+    else if(s.phase==='current'){chk.textContent='Up to date';lock(false);}
+    else if(s.phase==='check-failed'){chk.textContent='Could not check';}
+  });
+})();
+</script>
+</body>
+</html>

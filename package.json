@@ -1,0 +1,37 @@
+{
+  "name": "wrapmates-reports",
+  "productName": "WrapMates Reports",
+  "version": "1.5.0",
+  "description": "WrapMates management reports in their own window",
+  "author": "WrapMates",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64 --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9"
+  },
+  "devDependencies": {
+    "electron": "41.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.wrapmates.reports",
+    "productName": "WrapMates Reports",
+    "copyright": "© 2026 WrapMates",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "app/**/*", "build/icon.png", "package.json"],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.png" },
+    "nsis": {
+      "artifactName": "WrapMates-Reports-Setup-${version}.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WrapMates Reports"
+    },
+    "publish": [{ "provider": "github", "owner": "christianbelchior", "repo": "wrapmates-reports", "releaseType": "release" }]
+  }
+}
