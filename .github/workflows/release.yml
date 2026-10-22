@@ -29,4 +29,11 @@ jobs:
           V=$(node -p "require('./package.json').version")
           cd dist
           ls -la
-          gh release create "v$V" --title "v$V" --notes "WrapMates Reports $V" "WrapMates-Reports-Setup-$V.exe" "WrapMates-Reports-Setup-$V.exe.blockmap" latest.yml 2>&1 || { echo "::error::release upload failed"; exit 1; }
+          FILES="WrapMates-Reports-Setup-$V.exe WrapMates-Reports-Setup-$V.exe.blockmap latest.yml"
+          if gh release view "v$V" >/dev/null 2>&1; then
+            gh release upload "v$V" $FILES --clobber 2>&1 || { echo "::error::release upload failed"; exit 1; }
+            gh release edit "v$V" --draft=false --latest 2>&1 || true
+          else
+            gh release create "v$V" --title "v$V" --notes "WrapMates Reports $V" $FILES 2>&1 || { echo "::error::release create failed"; exit 1; }
+          fi
+          echo "::notice::published v$V"
