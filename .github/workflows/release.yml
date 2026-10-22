@@ -1,8 +1,8 @@
 name: Build and release
 on:
+  workflow_dispatch:
   push:
     tags: ['v*']
-  workflow_dispatch:
 permissions:
   contents: write
 jobs:
@@ -14,6 +14,19 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npx electron-builder --win --x64 --publish always
+      - name: Build installer
+        shell: bash
+        run: |
+          set -o pipefail
+          npx electron-builder --win --x64 --publish never 2>&1 | tee build.log || { tail -25 build.log | sed 's/^/::error::/'; exit 1; }
+          ls -la dist
+      - name: Publish release
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          V=$(node -p "require('./package.json').version")
+          cd dist
+          ls -la
+          gh release create "v$V" --title "v$V" --notes "WrapMates Reports $V" "WrapMates-Reports-Setup-$V.exe" "WrapMates-Reports-Setup-$V.exe.blockmap" latest.yml 2>&1 || { echo "::error::release upload failed"; exit 1; }
