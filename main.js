@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu, session, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, Menu, session, ipcMain, webContents } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 
@@ -59,6 +59,28 @@ function checkNow() {
 ipcMain.handle('update-check', () => checkNow());
 ipcMain.handle('update-install', () => { setImmediate(() => autoUpdater.quitAndInstall(true, true)); });
 ipcMain.handle('app-version', () => app.getVersion());
+// ---------- "Needs action" list in the side panel ----------
+// Reads the open report page (inside its artifact frame) and returns the clients needing action.
+const EXTRACT = '(' + require('./tasks-extract.js').toString() + ')()';
+function reportFrames(id) {
+  const wc = webContents.fromId(Number(id));
+  if (!wc || wc.isDestroyed() || wc.getType() !== 'webview') return [];
+  try { return wc.mainFrame.framesInSubtree.filter((f) => /(^|\.)claudeusercontent\.com$/.test(new URL(f.url).hostname)); } catch { return []; }
+}
+ipcMain.handle('tasks-get', async (_e, id) => {
+  for (const f of reportFrames(id)) {
+    try { const r = await f.executeJavaScript(EXTRACT); if (r && Array.isArray(r.items)) return r; } catch {}
+  }
+  return null;
+});
+ipcMain.handle('tasks-open', async (_e, id, client) => {
+  const k = JSON.stringify(String(client || '').slice(0, 300));
+  const js = '(function(k){var c=Array.prototype.find.call(document.querySelectorAll(".client[data-client]"),function(e){return e.dataset.client===k;});if(!c)return false;c.click();return true;})(' + k + ')';
+  for (const f of reportFrames(id)) {
+    try { if (await f.executeJavaScript(js)) return true; } catch {}
+  }
+  return false;
+});
 ipcMain.handle('reset-profile', async (_e, who) => {
   if (!['mark', 'christian', 'alessandro'].includes(who)) return false;
   await session.fromPartition('persist:claude-' + who).clearStorageData();

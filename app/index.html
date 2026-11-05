@@ -86,6 +86,32 @@ iframe,webview{position:absolute;inset:0;width:100%;height:100%;border:0;backgro
 .ghint .box{background:#121A38;border:1px solid var(--rule);border-radius:12px;max-width:460px;padding:24px}
 .ghint h2{margin:0 0 8px;font-size:18px}.ghint p{color:#C8CDE2;line-height:1.5;margin:0 0 14px}
 .ghint button{all:unset;cursor:pointer;background:var(--orange);color:var(--navy);font-weight:600;padding:9px 16px;border-radius:8px}
+/* Needs action dropdown */
+.act{margin-top:14px;display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.act-btn{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:9px;width:100%;padding:10px 10px;border-radius:8px;cursor:pointer;background:#141C3F;border:1px solid var(--rule);color:var(--txt);font-size:13.5px;font-weight:600}
+.act-btn:hover{background:#1B2550}.act-btn:focus-visible{outline:2px solid var(--orange);outline-offset:1px}
+.act-btn svg{width:17px;height:17px;flex:none;color:var(--orange)}
+.act-btn .n{margin-left:auto;min-width:22px;padding:2px 7px;border-radius:999px;background:var(--orange);color:var(--navy);font-size:12px;font-weight:700;text-align:center}
+.act-btn .n.zero{background:#26305A;color:var(--muted)}
+.act-btn .chev{transition:transform .15s;color:var(--muted);font-size:11px}
+.act.open .act-btn .chev{transform:rotate(180deg)}
+.act-list{list-style:none;margin:6px 0 0;padding:0;overflow:auto;min-height:0;display:none}
+.act.open .act-list{display:block}
+.act-list li button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:20px 1fr;gap:2px 8px;width:100%;padding:8px 8px 8px 6px;border-radius:7px;cursor:pointer;border-left:3px solid transparent;margin-bottom:2px}
+.act-list li button:hover{background:#151D40}.act-list li button:focus-visible{outline:2px solid var(--orange)}
+.act-list .r{grid-row:span 2;font-size:11.5px;color:var(--muted);text-align:right;padding-top:1px}
+.act-list .c{font-size:13px;line-height:1.3;color:var(--txt);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.act-list .w{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-list .p0,.act-list .p1,.act-list .p2{border-left-color:#E5484D}.act-list .p0 .w,.act-list .p1 .w,.act-list .p2 .w{color:#FF9A9D}
+.act-list .p3,.act-list .p4{border-left-color:var(--orange)}.act-list .p3 .w,.act-list .p4 .w{color:#FFC08A}
+.act-list .p5,.act-list .p6{border-left-color:#4986E7}
+.act-empty{font-size:12px;color:var(--muted);padding:8px 10px;line-height:1.45}
+.act-foot{font-size:11px;color:var(--muted);padding:6px 10px 0}
+.app.mini .act-btn .lbl,.app.mini .act-btn .chev,.app.mini .act-list,.app.mini .act-foot{display:none!important}
+.app.mini .act{flex:0 0 auto;align-items:center}
+.app.mini .act-btn{width:42px;padding:9px 0;justify-content:center;position:relative;background:none;border:0}
+.app.mini .act-btn .n{position:absolute;top:0;right:-2px;min-width:16px;padding:1px 4px;font-size:10px}
+.note{margin-top:12px}.act[hidden]+.note,.app.mini .note{margin-top:auto}
 </style>
 </head>
 <body>
@@ -94,6 +120,14 @@ iframe,webview{position:absolute;inset:0;width:100%;height:100%;border:0;backgro
     <div class="brand"><img class="mk" src="mark.png" alt=""><div><b>WrapMates</b><small>Reports</small></div><button type="button" class="sbtn" id="side-tgl" aria-label="Collapse the side panel" title="Collapse">&#171;</button></div>
     <div class="grp">Live · refreshed every hour</div>
     <div id="navlist"></div>
+    <div class="act" id="act" hidden>
+      <button type="button" class="act-btn" id="act-btn" aria-expanded="false" aria-controls="act-list" title="Clients that need action">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+        <span class="lbl">Needs action</span><span class="n zero" id="act-n">–</span><span class="chev" aria-hidden="true">&#9660;</span>
+      </button>
+      <ol class="act-list" id="act-list" aria-label="Clients that need action, most urgent first"></ol>
+      <div class="act-foot" id="act-foot"></div>
+    </div>
     <div class="note">Your report reloads by itself every hour. Sign in to Claude once with your own email inside the app; it remembers you. Email and WhatsApp links open in your normal browser.</div>
     <div class="who"><span class="dot" id="who-dot"></span><span id="who-name"></span><button type="button" id="lock">Lock</button><button type="button" id="switch">Switch user</button></div>
     <div class="ver"><span id="ver">Version …</span><button type="button" id="chk">Check for updates</button></div>
@@ -167,7 +201,7 @@ function clearViews(){Object.keys(views).forEach(function(v){views[v].el.remove(
 function stamp(v){views[v].at=new Date();if(current===v)urlEl.textContent='Updated '+hhmm(views[v].at)+' · refreshes every hour';}
 function ensureWv(v){if(views[v])return views[v].el;var wv=document.createElement('webview');wv.setAttribute('partition','persist:claude-'+user);wv.setAttribute('allowpopups','');wv.src=URLS[v];wv.hidden=true;wrap.appendChild(wv);
   views[v]={el:wv,at:null};
-  wv.addEventListener('did-finish-load',function(){stamp(v);});
+  wv.addEventListener('did-finish-load',function(){stamp(v);if(current===v)loadTasksSoon();});
   wv.addEventListener('did-navigate',function(e){if(/^https:\/\/accounts\.google\.com\//.test(e.url)&&current===v){ghint.hidden=false;}});
   return wv;}
 document.getElementById('ghint-ok').onclick=function(){ghint.hidden=true;var w=views[current];if(w){if(w.el.canGoBack())w.el.goBack();else w.el.loadURL(URLS[current]);}};
@@ -178,7 +212,29 @@ document.getElementById('b-reload').onclick=function(){var w=current&&views[curr
 function show(v){if(!user||PEOPLE[user].views.indexOf(v)<0)return;ghint.hidden=true;
   document.querySelectorAll('button.nav').forEach(function(n){n.setAttribute('aria-current',String(n.dataset.view===v));});
   ensureWv(v);Object.keys(views).forEach(function(k){views[k].el.hidden=k!==v;});current=v;
-  var at=views[v].at;urlEl.textContent=at?('Updated '+hhmm(at)+' · refreshes every hour'):'Loading…';store('wm-view-'+user,v);}
+  var at=views[v].at;urlEl.textContent=at?('Updated '+hhmm(at)+' · refreshes every hour'):'Loading…';store('wm-view-'+user,v);
+  if(window.wmTasks){act.hidden=!/^live-/.test(v);renderTasks(TASKS[v]||null);loadTasksSoon();}}
+
+/* ---------- Needs action dropdown: clients from the open report, most urgent first ---------- */
+var act=document.getElementById('act'),actBtn=document.getElementById('act-btn'),actList=document.getElementById('act-list'),actN=document.getElementById('act-n'),actFoot=document.getElementById('act-foot'),TASKS={},tTimers=[];
+function wcId(v){try{var w=views[v]&&views[v].el;return w?w.getWebContentsId():null;}catch(e){return null;}}
+function setOpen(on){act.classList.toggle('open',on);actBtn.setAttribute('aria-expanded',String(on));store('wm-act-open',on?'1':'0');}
+actBtn.onclick=function(){if(appEl.classList.contains('mini')){document.getElementById('side-tgl').click();setOpen(true);}else setOpen(!act.classList.contains('open'));loadTasks();};
+function renderTasks(r){actList.textContent='';
+  if(!r){actN.textContent='–';actN.className='n zero';actFoot.textContent='';var e=document.createElement('li');e.className='act-empty';e.textContent='Reading the report… If this stays empty, open the report and sign in.';actList.appendChild(e);return;}
+  var L=r.items||[];actN.textContent=String(L.length);actN.className='n'+(L.length?'':' zero');actBtn.title=L.length+' client'+(L.length===1?'':'s')+' need action';
+  if(!L.length){var z=document.createElement('li');z.className='act-empty';z.textContent='Nothing waiting on us right now.';actList.appendChild(z);}
+  L.forEach(function(it,i){var li=document.createElement('li'),b=document.createElement('button');b.type='button';b.className='p'+it.tier;
+    var rn=document.createElement('span');rn.className='r';rn.textContent=String(i+1);
+    var c=document.createElement('span');c.className='c';c.textContent=it.client;
+    var w=document.createElement('span');w.className='w';w.textContent=it.why+(it.when?' · '+it.when:'')+(it.owner&&current==='live-christian'&&it.owner!=='Christian'?' · '+it.owner:'');
+    b.title=it.client+'\n'+it.why+(it.when?' ('+it.when+')':'')+(it.title?'\n'+it.title:'');
+    b.append(rn,c,w);b.onclick=function(){var id=wcId(current);if(id)window.wmTasks.open(id,it.client);};li.appendChild(b);actList.appendChild(li);});
+  actFoot.textContent='Checked '+hhmm(new Date());}
+function loadTasks(){var v=current,id=wcId(v);if(!id||!/^live-/.test(v||''))return;
+  window.wmTasks.get(id).then(function(r){if(r){TASKS[v]=r;}if(current===v)renderTasks(TASKS[v]||null);}).catch(function(){});}
+function loadTasksSoon(){tTimers.forEach(clearTimeout);tTimers=[1500,5000,12000].map(function(ms){return setTimeout(loadTasks,ms);});}
+if(window.wmTasks){setOpen(store('wm-act-open')!=='0');setInterval(loadTasks,60000);}
 function buildNav(){var nl=document.getElementById('navlist');nl.textContent='';
   PEOPLE[user].views.forEach(function(v){var b=document.createElement('button');b.className='nav';b.type='button';b.dataset.view=v;
     var d=document.createElement('span');d.className='dot '+LABEL[v][1];b.appendChild(d);var lb=document.createElement('span');lb.className='lbl';lb.textContent=LABEL[v][0];b.appendChild(lb);b.title=LABEL[v][0];b.setAttribute('aria-label',LABEL[v][0]);b.onclick=function(){show(v);};nl.appendChild(b);});
