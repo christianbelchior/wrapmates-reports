@@ -81,6 +81,14 @@ ipcMain.handle('tasks-open', async (_e, id, client) => {
   }
   return false;
 });
+ipcMain.handle('tasks-done', async (_e, id, client, on) => {
+  const k = JSON.stringify(String(client || '').slice(0, 300));
+  const js = '(function(k,on){if(!window.WMDONE||!window.WMDONE.set)return false;window.WMDONE.set(k,on);try{if(window.WMPAINTDONE)window.WMPAINTDONE();}catch(e){}return !!window.WMDONE.is(k)===on;})(' + k + ',' + (on ? 'true' : 'false') + ')';
+  for (const f of reportFrames(id)) {
+    try { if (await f.executeJavaScript(js)) return true; } catch {}
+  }
+  return false;
+});
 ipcMain.handle('reset-profile', async (_e, who) => {
   if (!['mark', 'christian', 'alessandro'].includes(who)) return false;
   await session.fromPartition('persist:claude-' + who).clearStorageData();

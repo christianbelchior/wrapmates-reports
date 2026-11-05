@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('wmUpdate', {
 contextBridge.exposeInMainWorld('wmTasks', {
   get: (id) => ipcRenderer.invoke('tasks-get', id),
   open: (id, client) => ipcRenderer.invoke('tasks-open', id, client),
+  done: (id, client, on) => ipcRenderer.invoke('tasks-done', id, client, on !== false),
 });

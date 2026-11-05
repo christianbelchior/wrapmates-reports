@@ -12,3 +12,6 @@ Desktop app (Electron) that shows the WrapMates live report pages for Mark, Chri
 
 ## 1.6.0
 - "Needs action" dropdown in the side panel: lists the clients in the open report that need something from us, most urgent first (new enquiries, waiting too long, overdue/urgent flags, waiting on us, design needed, promises). Clicking a client opens their card. Done or snoozed clients are left out; the list re-checks every minute and after every reload. In the collapsed panel it shows as a warning icon with the count.
+
+## 1.6.1
+- "Needs action" list: each client now has a tick button. It marks the client Done in the report (the same shared Done the card's button uses, for Mark, Christian and Alessandro), so they leave the list and only come back when the client sends a new message. An Undo link shows for 10 seconds.

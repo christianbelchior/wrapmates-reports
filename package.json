@@ -1,7 +1,7 @@
 {
   "name": "wrapmates-reports",
   "productName": "WrapMates Reports",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "WrapMates management reports in their own window",
   "author": "WrapMates",
   "main": "main.js",

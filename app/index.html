@@ -97,8 +97,14 @@ iframe,webview{position:absolute;inset:0;width:100%;height:100%;border:0;backgro
 .act.open .act-btn .chev{transform:rotate(180deg)}
 .act-list{list-style:none;margin:6px 0 0;padding:0;overflow:auto;min-height:0;display:none}
 .act.open .act-list{display:block}
-.act-list li button{all:unset;box-sizing:border-box;display:grid;grid-template-columns:20px 1fr;gap:2px 8px;width:100%;padding:8px 8px 8px 6px;border-radius:7px;cursor:pointer;border-left:3px solid transparent;margin-bottom:2px}
-.act-list li button:hover{background:#151D40}.act-list li button:focus-visible{outline:2px solid var(--orange)}
+.act-list li{display:flex;align-items:stretch;gap:2px;margin-bottom:2px}
+.act-list li.going{opacity:.35;pointer-events:none;transition:opacity .2s}
+.act-list li .tick{all:unset;box-sizing:border-box;flex:none;width:30px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;color:var(--muted)}
+.act-list li .tick svg{width:16px;height:16px}
+.act-list li .tick:hover{background:#163A2A;color:#3DD68C}.act-list li .tick:focus-visible{outline:2px solid var(--orange)}
+.act-undo{all:unset;cursor:pointer;color:var(--orange);font-weight:600;margin-left:6px}.act-undo:hover{text-decoration:underline}
+.act-list li button.main{all:unset;flex:1;min-width:0;box-sizing:border-box;display:grid;grid-template-columns:20px 1fr;gap:2px 8px;width:100%;padding:8px 8px 8px 6px;border-radius:7px;cursor:pointer;border-left:3px solid transparent}
+.act-list li button.main:hover{background:#151D40}.act-list li button.main:focus-visible{outline:2px solid var(--orange)}
 .act-list .r{grid-row:span 2;font-size:11.5px;color:var(--muted);text-align:right;padding-top:1px}
 .act-list .c{font-size:13px;line-height:1.3;color:var(--txt);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .act-list .w{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -224,13 +230,29 @@ function renderTasks(r){actList.textContent='';
   if(!r){actN.textContent='–';actN.className='n zero';actFoot.textContent='';var e=document.createElement('li');e.className='act-empty';e.textContent='Reading the report… If this stays empty, open the report and sign in.';actList.appendChild(e);return;}
   var L=r.items||[];actN.textContent=String(L.length);actN.className='n'+(L.length?'':' zero');actBtn.title=L.length+' client'+(L.length===1?'':'s')+' need action';
   if(!L.length){var z=document.createElement('li');z.className='act-empty';z.textContent='Nothing waiting on us right now.';actList.appendChild(z);}
-  L.forEach(function(it,i){var li=document.createElement('li'),b=document.createElement('button');b.type='button';b.className='p'+it.tier;
+  L.forEach(function(it,i){var li=document.createElement('li'),b=document.createElement('button');b.type='button';b.className='main p'+it.tier;
     var rn=document.createElement('span');rn.className='r';rn.textContent=String(i+1);
     var c=document.createElement('span');c.className='c';c.textContent=it.client;
     var w=document.createElement('span');w.className='w';w.textContent=it.why+(it.when?' · '+it.when:'')+(it.owner&&current==='live-christian'&&it.owner!=='Christian'?' · '+it.owner:'');
     b.title=it.client+'\n'+it.why+(it.when?' ('+it.when+')':'')+(it.title?'\n'+it.title:'');
-    b.append(rn,c,w);b.onclick=function(){var id=wcId(current);if(id)window.wmTasks.open(id,it.client);};li.appendChild(b);actList.appendChild(li);});
-  actFoot.textContent='Checked '+hhmm(new Date());}
+    b.append(rn,c,w);b.onclick=function(){var id=wcId(current);if(id)window.wmTasks.open(id,it.client);};li.appendChild(b);
+    if(window.wmTasks.done){var t=document.createElement('button');t.type='button';t.className='tick';t.title='Done: hide '+it.client+' until they message again';t.setAttribute('aria-label','Mark '+it.client+' as done');
+      t.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+      t.onclick=function(){markDone(it.client,li);};li.appendChild(t);}
+    actList.appendChild(li);});
+  if(!undoShown())actFoot.textContent='Checked '+hhmm(new Date());}
+var UNDO=null;
+function undoShown(){return !!(UNDO&&UNDO.until>Date.now());}
+function showUndo(){actFoot.textContent='';if(!undoShown())return;actFoot.append(document.createTextNode(UNDO.client+' done · back when they message'));
+  var u=document.createElement('button');u.type='button';u.className='act-undo';u.textContent='Undo';
+  u.onclick=function(){var x=UNDO;UNDO=null;actFoot.textContent='';window.wmTasks.done(x.id,x.client,false).then(function(){loadTasks();});};actFoot.appendChild(u);}
+function markDone(client,li){var v=current,id=wcId(v);if(!id)return;li.classList.add('going');
+  window.wmTasks.done(id,client,true).then(function(ok){
+    if(!ok){li.classList.remove('going');actFoot.textContent='Could not mark '+client+' as done. Open the report and try again.';return;}
+    var r=TASKS[v];if(r&&r.items){r.items=r.items.filter(function(x){return x.client!==client;});}
+    UNDO={client:client,id:id,until:Date.now()+10000};renderTasks(r||null);showUndo();
+    setTimeout(function(){if(UNDO&&UNDO.client===client&&!undoShown()){UNDO=null;actFoot.textContent='Checked '+hhmm(new Date());}},10200);
+    setTimeout(loadTasks,1500);}).catch(function(){li.classList.remove('going');});}
 function loadTasks(){var v=current,id=wcId(v);if(!id||!/^live-/.test(v||''))return;
   window.wmTasks.get(id).then(function(r){if(r){TASKS[v]=r;}if(current===v)renderTasks(TASKS[v]||null);}).catch(function(){});}
 function loadTasksSoon(){tTimers.forEach(clearTimeout);tTimers=[1500,5000,12000].map(function(ms){return setTimeout(loadTasks,ms);});}
