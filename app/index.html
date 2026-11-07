@@ -207,14 +207,30 @@ function clearViews(){Object.keys(views).forEach(function(v){views[v].el.remove(
 function stamp(v){views[v].at=new Date();if(current===v)urlEl.textContent='Updated '+hhmm(views[v].at)+' · refreshes every hour';}
 function ensureWv(v){if(views[v])return views[v].el;var wv=document.createElement('webview');wv.setAttribute('partition','persist:claude-'+user);wv.setAttribute('allowpopups','');wv.src=URLS[v];wv.hidden=true;wrap.appendChild(wv);
   views[v]={el:wv,at:null};
-  wv.addEventListener('did-finish-load',function(){stamp(v);if(current===v)loadTasksSoon();});
+  wv.addEventListener('did-finish-load',function(){stamp(v);if(current===v)loadTasksSoon();restoreSoon(v);});
   wv.addEventListener('did-navigate',function(e){if(/^https:\/\/accounts\.google\.com\//.test(e.url)&&current===v){ghint.hidden=false;}});
   return wv;}
 document.getElementById('ghint-ok').onclick=function(){ghint.hidden=true;var w=views[current];if(w){if(w.el.canGoBack())w.el.goBack();else w.el.loadURL(URLS[current]);}};
-function refreshAll(){Object.keys(views).forEach(function(v){try{views[v].el.loadURL(URLS[v]);}catch(e){}});}
+/* ---------- keep your place: Back goes one step back inside the report; reloads put you back where you were ---------- */
+var NAVS={},PEND={};
+function isReportUrl(u){return /^https:\/\/claude\.ai\/(?:code\/)?artifact\//.test(u||'');}
+function wvUrl(v){try{return views[v].el.getURL();}catch(e){return '';}}
+function capture(v){if(!window.wmNav||!views[v]||!isReportUrl(wvUrl(v)))return Promise.resolve(null);var id=wcId(v);if(id==null)return Promise.resolve(null);
+  return wmNav.capture(id).then(function(s){if(s&&typeof s==='object')NAVS[v]=s;return s;}).catch(function(){return null;});}
+setInterval(function(){if(current&&/^live-/.test(current)&&!document.hidden)capture(current);},2000);
+function remember(v){if(NAVS[v])PEND[v]=NAVS[v];}
+function restoreSoon(v){if(!window.wmNav||!PEND[v])return;var st=PEND[v],tries=0;
+  (function go(){if(PEND[v]!==st)return;if(!isReportUrl(wvUrl(v))){if(++tries<30)setTimeout(go,700);return;}var id=wcId(v);
+    wmNav.restore(id,st).then(function(r){if(r==='wait'||r===null){if(++tries<30)setTimeout(go,700);else delete PEND[v];}else delete PEND[v];}).catch(function(){if(++tries<30)setTimeout(go,700);});})();}
+function reloadView(v){var w=views[v];if(!w)return;capture(v).then(function(){remember(v);w.el.loadURL(URLS[v]);});}
+function refreshAll(){Object.keys(views).forEach(function(v){try{reloadView(v);}catch(e){}});}
 setInterval(refreshAll,HOUR);window.addEventListener('online',refreshAll);
-document.getElementById('b-back').onclick=function(){var w=current&&views[current];if(w&&w.el.canGoBack())w.el.goBack();};
-document.getElementById('b-reload').onclick=function(){var w=current&&views[current];if(w)w.el.loadURL(URLS[current]);};
+document.getElementById('b-back').onclick=function(){var v=current,w=v&&views[v];if(!w)return;
+  var step=(window.wmNav&&isReportUrl(wvUrl(v)))?wmNav.back(wcId(v)).catch(function(){return false;}):Promise.resolve(false);
+  step.then(function(done){if(done){setTimeout(function(){capture(v);},400);return;}
+    if(w.el.canGoBack()){remember(v);w.el.goBack();}
+    else if(!isReportUrl(wvUrl(v))){remember(v);w.el.loadURL(URLS[v]);}});};
+document.getElementById('b-reload').onclick=function(){if(current)reloadView(current);};
 function show(v){if(!user||PEOPLE[user].views.indexOf(v)<0)return;ghint.hidden=true;
   document.querySelectorAll('button.nav').forEach(function(n){n.setAttribute('aria-current',String(n.dataset.view===v));});
   ensureWv(v);Object.keys(views).forEach(function(k){views[k].el.hidden=k!==v;});current=v;

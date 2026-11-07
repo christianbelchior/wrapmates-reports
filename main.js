@@ -89,6 +89,48 @@ ipcMain.handle('tasks-done', async (_e, id, client, on) => {
   }
   return false;
 });
+// ---------- Back / reload keep your place in the report ----------
+const NAV = require('./nav-state.js');
+const NAV_CAPTURE = '(' + NAV.capture.toString() + ')()';
+const NAV_BACK = '(' + NAV.back.toString() + ')()';
+async function inReport(id, js) {
+  for (const f of reportFrames(id)) {
+    try { const r = await f.executeJavaScript(js); if (r !== null && r !== undefined && r !== false) return r; } catch {}
+  }
+  return null;
+}
+ipcMain.handle('nav-capture', (_e, id) => inReport(id, NAV_CAPTURE));
+ipcMain.handle('nav-back', async (_e, id) => !!(await inReport(id, NAV_BACK)));
+ipcMain.handle('nav-restore', (_e, id, state) => {
+  if (!state || typeof state !== 'object') return false;
+  const safe = JSON.stringify({
+    view: String(state.view || '').slice(0, 40), section: String(state.section || '').slice(0, 80), search: String(state.search || '').slice(0, 120),
+    card: String(state.card || '').slice(0, 300), tab: String(state.tab || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 30),
+    y: Math.max(0, Number(state.y) || 0), sy: Math.max(0, Number(state.sy) || 0),
+  });
+  return inReport(id, '(' + NAV.restore.toString() + ')(' + safe + ')');
+});
+
+// Photos and files from the report open in their own window, so the report stays exactly where it was.
+function isReportPage(url) {
+  try { const u = new URL(url); return u.hostname === 'claude.ai' && /^\/(?:code\/)?artifacts?(\/|$)/.test(u.pathname); } catch { return false; }
+}
+function isAsset(url) {
+  try { const u = new URL(url); return u.protocol === 'https:' && /(^|\.)claudeusercontent\.com$/.test(u.hostname); } catch { return false; }
+}
+function openViewer(contents, url) {
+  const parent = BrowserWindow.fromWebContents(contents.hostWebContents || contents) || mainWin;
+  const w = new BrowserWindow({
+    width: 1200, height: 880, minWidth: 480, minHeight: 360, title: 'WrapMates Reports', backgroundColor: '#0E1634',
+    icon: path.join(__dirname, 'build', 'icon.png'), autoHideMenuBar: true, parent: parent || undefined,
+    webPreferences: { session: contents.session, contextIsolation: true, nodeIntegration: false, sandbox: true },
+  });
+  w.__viewer = true;
+  w.webContents.on('before-input-event', (ev, input) => { if (input.type === 'keyDown' && input.key === 'Escape') { ev.preventDefault(); w.close(); } });
+  w.loadURL(url);
+  return w;
+}
+
 ipcMain.handle('reset-profile', async (_e, who) => {
   if (!['mark', 'christian', 'alessandro'].includes(who)) return false;
   await session.fromPartition('persist:claude-' + who).clearStorageData();
@@ -144,7 +186,8 @@ app.on('web-contents-created', (_e, contents) => {
   contents.setWindowOpenHandler(({ url }) => {
     if (isWv()) {
       const who = whoFor(contents);
-      if (allowedInWebview(url, who)) contents.loadURL(url);
+      if (isAsset(url)) openViewer(contents, url);
+      else if (allowedInWebview(url, who)) contents.loadURL(url);
       else if (!/^https:\/\/([a-z0-9-]+\.)*claude\.ai\//i.test(url)) shell.openExternal(url);
       return { action: 'deny' };
     }
@@ -153,6 +196,7 @@ app.on('web-contents-created', (_e, contents) => {
   });
   contents.on('will-navigate', (e, url) => {
     if (isWv()) {
+      if (isAsset(url) && isReportPage(contents.getURL())) { e.preventDefault(); openViewer(contents, url); return; }
       if (!allowedInWebview(url, whoFor(contents))) {
         e.preventDefault();
         if (!/^https:\/\/([a-z0-9-]+\.)*claude\.ai\//i.test(url) && !isInternal(url)) shell.openExternal(url);
@@ -160,6 +204,8 @@ app.on('web-contents-created', (_e, contents) => {
       }
       return;
     }
+    const bw = BrowserWindow.fromWebContents(contents);
+    if (bw && bw.__viewer && isAsset(url)) return;
     if (!url.startsWith('file:')) { e.preventDefault(); shell.openExternal(url); }
   });
   {

@@ -15,3 +15,8 @@ Desktop app (Electron) that shows the WrapMates live report pages for Mark, Chri
 
 ## 1.6.1
 - "Needs action" list: each client now has a tick button. It marks the client Done in the report (the same shared Done the card's button uses, for Mark, Christian and Alessandro), so they leave the list and only come back when the client sends a new message. An Undo link shows for 10 seconds.
+
+## 1.6.2
+- **Back** now goes one step back inside the report instead of jumping to the home menu: photo → client card → section → menu. Only when there is nothing left to close does it go back to the previous page.
+- Photos and files opened from the report open in their own window (Esc closes it), so the report stays exactly where it was.
+- After Back, **Reload now** or the hourly refresh, the report reopens where you were: the same section, search, client card, tab and scroll position.

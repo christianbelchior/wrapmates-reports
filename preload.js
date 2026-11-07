@@ -6,6 +6,11 @@ contextBridge.exposeInMainWorld('wmUpdate', {
   version: () => ipcRenderer.invoke('app-version'),
   resetProfile: (who) => ipcRenderer.invoke('reset-profile', who),
 });
+contextBridge.exposeInMainWorld('wmNav', {
+  capture: (id) => ipcRenderer.invoke('nav-capture', id),
+  restore: (id, state) => ipcRenderer.invoke('nav-restore', id, state),
+  back: (id) => ipcRenderer.invoke('nav-back', id),
+});
 contextBridge.exposeInMainWorld('wmTasks', {
   get: (id) => ipcRenderer.invoke('tasks-get', id),
   open: (id, client) => ipcRenderer.invoke('tasks-open', id, client),
