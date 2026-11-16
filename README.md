@@ -20,3 +20,6 @@ Desktop app (Electron) that shows the WrapMates live report pages for Mark, Chri
 - **Back** now goes one step back inside the report instead of jumping to the home menu: photo → client card → section → menu. Only when there is nothing left to close does it go back to the previous page.
 - Photos and files opened from the report open in their own window (Esc closes it), so the report stays exactly where it was.
 - After Back, **Reload now** or the hourly refresh, the report reopens where you were: the same section, search, client card, tab and scroll position.
+
+## 1.6.3
+- The Mark and Alessandro buttons now open the new shared WrapMates Live app (each on their own view) instead of the old pages, which are no longer updated and showed an orange warning. Christian's button is unchanged.

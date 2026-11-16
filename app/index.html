@@ -194,7 +194,7 @@ var PEOPLE={
   alessandro:{name:'Alessandro',dot:'d-alessandro',views:['live-alessandro']}
 };
 var LABEL={'live-mark':['Mark','d-mark'],'live-christian':['Christian','d-christian'],'live-alessandro':['Alessandro','d-alessandro'],'online':['All reports','d-online']};
-var URLS={'live-mark':'https://claude.ai/artifact/RGxBZmiPZEz6eTkfYpQGBu','live-christian':'https://claude.ai/artifact/Vc4yAizv2Nytwv6GaqNsD6','live-alessandro':'https://claude.ai/artifact/Lo97ucJmpYc6D4Wab8qte5','online':'https://claude.ai/code/artifacts'};
+var URLS={'live-mark':'https://claude.ai/artifact/Vc4yAizv2Nytwv6GaqNsD6#mark','live-christian':'https://claude.ai/artifact/Vc4yAizv2Nytwv6GaqNsD6#christian','live-alessandro':'https://claude.ai/artifact/Vc4yAizv2Nytwv6GaqNsD6#alessandro','online':'https://claude.ai/code/artifacts'};
 var HOUR=60*60*1000,views={},current=null,user=null;
 var wrap=document.getElementById('online-wrap'),urlEl=document.getElementById('b-url'),appEl=document.querySelector('.app'),ghint=document.getElementById('ghint');
 function store(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}}
@@ -222,7 +222,7 @@ function remember(v){if(NAVS[v])PEND[v]=NAVS[v];}
 function restoreSoon(v){if(!window.wmNav||!PEND[v])return;var st=PEND[v],tries=0;
   (function go(){if(PEND[v]!==st)return;if(!isReportUrl(wvUrl(v))){if(++tries<30)setTimeout(go,700);return;}var id=wcId(v);
     wmNav.restore(id,st).then(function(r){if(r==='wait'||r===null){if(++tries<30)setTimeout(go,700);else delete PEND[v];}else delete PEND[v];}).catch(function(){if(++tries<30)setTimeout(go,700);});})();}
-function reloadView(v){var w=views[v];if(!w)return;capture(v).then(function(){remember(v);w.el.loadURL(URLS[v]);});}
+function reloadView(v){var w=views[v];if(!w)return;capture(v).then(function(){remember(v);if(wvUrl(v)===URLS[v])w.el.reload();else w.el.loadURL(URLS[v]);});}
 function refreshAll(){Object.keys(views).forEach(function(v){try{reloadView(v);}catch(e){}});}
 setInterval(refreshAll,HOUR);window.addEventListener('online',refreshAll);
 document.getElementById('b-back').onclick=function(){var v=current,w=v&&views[v];if(!w)return;

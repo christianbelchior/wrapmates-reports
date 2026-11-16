@@ -141,8 +141,9 @@ ipcMain.handle('reset-profile', async (_e, who) => {
 // Only the report pages and the Claude sign-in pages are allowed. Claude chats, history,
 // new conversations, projects and settings are blocked for everyone.
 const REPORTS = {
-  mark: ['RGxBZmiPZEz6eTkfYpQGBu'],
-  alessandro: ['Lo97ucJmpYc6D4Wab8qte5'],
+  // One shared app since 9 Nov 2026 (Vc4y…), each person on their own view (#mark, #alessandro). Old pages kept allowed.
+  mark: ['Vc4yAizv2Nytwv6GaqNsD6', 'RGxBZmiPZEz6eTkfYpQGBu'],
+  alessandro: ['Vc4yAizv2Nytwv6GaqNsD6', 'Lo97ucJmpYc6D4Wab8qte5'],
   christian: ['RGxBZmiPZEz6eTkfYpQGBu', 'Vc4yAizv2Nytwv6GaqNsD6', 'Lo97ucJmpYc6D4Wab8qte5'],
 };
 const AUTH_PATHS = [/^\/login(\/|$|\?)/, /^\/logout(\/|$)/, /^\/magic-link/, /^\/api\//, /^\/oauth/, /^\/sso/, /^\/verify/, /^\/auth/, /^\/onboarding/];
